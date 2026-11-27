@@ -19,7 +19,7 @@ public final class ProjectionAudit {
         if (pair.length != 2 || !pair[0].matches("[a-z][a-z0-9_]*"))
           throw new IllegalArgumentException(arg);
         db.setSchema(pair[0]);
-        try (var t = new FileSpool.Reader(Path.of(pair[1]))) {
+        try (var t = BusinessJournal.openReader(Path.of(pair[1]))) {
           long expected = new JsonObject(t.lastText()).getLong("n");
           t.seek(0);
           long limit = System.nanoTime() + 60_000_000_000L;

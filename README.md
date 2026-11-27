@@ -68,9 +68,22 @@ List the messages received and sent.
 
 # Running the project
 
-This branch uses QuickFIX/J 2.3.0, a JDK file journal and a separate PostgreSQL reporting process.
+This branch uses QuickFIX/J 2.3.0, a selectable business journal and a separate PostgreSQL reporting process.
 The [JDBC branch](https://github.com/peter-lawrey/fix-trading-simulator/tree/sql-optimisations) retains the direct database implementation.
 The original Docker Hub images run the original JDBC implementation.
+
+## Select the business journal
+
+A fresh store defaults to the JDK file journal. To use the open-source Chronicle Queue backend, set these variables in each trading process before its first start. The queue uses 64 MiB memory-mapped blocks and a daily roll cycle.
+
+```bash
+export SIM_BUSINESS_JOURNAL=queue
+export JDK_JAVA_OPTIONS="@$(pwd)/queue-jvm.args"
+```
+
+The reporting gateway and audit tool need the same JDK options. Both detect the journal format from disk and open a read-only tailer. PostgreSQL stores the last committed Queue index alongside the application event number and stream identity. For Docker Compose set `SIM_BUSINESS_JOURNAL=queue` in the shell. Compose supplies the JVM options to all three services.
+
+With `SIM_BUSINESS_JOURNAL=auto`, a restart reopens the existing journal format. The explicit `file` and `queue` settings require a matching store. Use new store volumes and reporting schemas for a comparison of the formats. Keep the FIX store, business journal and SQL checkpoint together for recovery.
 
 ## Start the broker and exchange
 
@@ -118,6 +131,8 @@ The default journal uses OS-cached appends. Set `-Dsim.forceBusinessCommit=true`
 QuickFIX/J uses a separate file store. Keep both stores together for restore. Confirm ambiguous sends before resuming a fenced session.
 The admission check samples writer-usable disk space off the order thread. Low space (below 256 MiB) or a reading aged one second pauses new commands.
 Fresh space reopens admission. The remaining headroom is available to complete accepted work. An actual uncertain write fences the session for recovery.
+
+Measure the HTTP and streaming entry paths using two sessions and reconcile the results against both FIX stores and PostgreSQL. [Order-entry benchmark](benchmarks/order-entry/README.md)
 
 ## Run with Docker Compose
 

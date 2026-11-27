@@ -39,7 +39,7 @@ final class Ledger {
   private final boolean force = Boolean.getBoolean("sim.forceBusinessCommit");
   private final FileChannel owner;
   private final FileLock lock;
-  private final FileSpool journal;
+  private final BusinessJournal journal;
   private final DiskHeadroom space;
   private long version;
   private String stream;
@@ -55,26 +55,31 @@ final class Ledger {
             store.resolve("business-writer.lock"),
             StandardOpenOption.CREATE,
             StandardOpenOption.WRITE);
-    lock = owner.tryLock();
-    if (lock == null) throw new IllegalStateException("Business store already has a writer");
-    Path dir = store.resolve("business-queue");
-    if (!Files.exists(dir)
-        && (Files.exists(store.resolve("native"))
-            || Files.exists(store.resolve("business.received"))))
-      throw new IllegalStateException(
-          "Existing FIX state requires a reconciled cutover before starting a new business"
-              + " journal");
-    FileStore filesystem = Files.getFileStore(store);
-    journal = new FileSpool(dir);
-    space = DiskHeadroom.start(filesystem);
+    try {
+      lock = owner.tryLock();
+      if (lock == null) throw new IllegalStateException("Business store already has a writer");
+      Path dir = store.resolve("business-queue");
+      if (!Files.exists(dir)
+          && (Files.exists(store.resolve("native"))
+              || Files.exists(store.resolve("business.received"))))
+        throw new IllegalStateException(
+            "Existing FIX state requires a reconciled cutover before starting a new business journal");
+      FileStore filesystem = Files.getFileStore(store);
+      journal = BusinessJournal.open(dir, setting("SIM_BUSINESS_JOURNAL", "auto"));
+      try {
+        space = DiskHeadroom.start(filesystem);
+      } catch (RuntimeException | Error failure) {
+        journal.close();
+        throw failure;
+      }
+    } catch (Exception | Error failure) {
+      owner.close();
+      throw failure;
+    }
   }
 
-  synchronized void recover() {
-    try (var tail = journal.reader()) {
-      String value;
-      while ((value = tail.readText()) != null) apply(new JsonObject(value));
-      journal.finishRecovery(tail);
-    }
+  synchronized void recover() throws java.io.IOException {
+    journal.recover(text -> apply(new JsonObject(text)));
     if (version > 1 && !Files.isDirectory(store.resolve("native")))
       throw new IllegalStateException("Missing FIX store for existing business journal");
     if (version == 0) {

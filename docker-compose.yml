@@ -6,10 +6,13 @@ services:
     ports:
       - "127.0.0.1:8090:8090"
     environment:
+      JDK_JAVA_OPTIONS: "@/app/queue-jvm.args"
+      SIM_BUSINESS_JOURNAL: ${SIM_BUSINESS_JOURNAL:-auto}
       SIM_STORE: /store
       SIM_FIX_HOST: 0.0.0.0
     volumes:
       - exchange-store:/store
+      - ./queue-jvm.args:/app/queue-jvm.args:ro
 
   broker-back-end:
     build:
@@ -18,10 +21,13 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
     environment:
+      JDK_JAVA_OPTIONS: "@/app/queue-jvm.args"
+      SIM_BUSINESS_JOURNAL: ${SIM_BUSINESS_JOURNAL:-auto}
       SIM_STORE: /store
       SIM_FIX_HOST: exchange-back-end
     volumes:
       - broker-store:/store
+      - ./queue-jvm.args:/app/queue-jvm.args:ro
 
   postgresql-qfj:
     image: postgres:15
@@ -40,6 +46,7 @@ services:
   reporting-gateway:
     build: reporting-gateway
     environment:
+      JDK_JAVA_OPTIONS: "@/app/queue-jvm.args"
       SIM_DB_URL: jdbc:postgresql://postgresql-qfj:5432/postgres?reWriteBatchedInserts=true
       SIM_DB_USER: postgres
       SIM_DB_PASSWORD: ${POSTGRES_PASSWORD}
@@ -50,6 +57,7 @@ services:
       postgresql-qfj:
         condition: service_healthy
     volumes:
+      - ./queue-jvm.args:/app/queue-jvm.args:ro
       - broker-store:/broker:ro
       - exchange-store:/exchange:ro
 
