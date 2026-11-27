@@ -1,8 +1,28 @@
-<button mat-raised-button (click)="readOrders(true)" color="primary">
-    Refresh
-</button>
+<div class="order-toolbar">
+    <button mat-raised-button (click)="readOrders(true)" color="primary">
+        Refresh
+    </button>
+    <button mat-stroked-button class="latest" (click)="latest()" [disabled]="live && state === 'live'">
+        Latest
+    </button>
+    <button mat-stroked-button class="newer" (click)="newerOrders()" [disabled]="live">
+        Newer
+    </button>
+    <button mat-stroked-button class="older" (click)="older()" [disabled]="!orders.length">
+        Older
+    </button>
+    <span class="feed-state" [attr.data-state]="state" [attr.data-newer]="newer">
+        <ng-container [ngSwitch]="state">
+            <ng-container *ngSwitchCase="'connecting'">Connecting…</ng-container>
+            <ng-container *ngSwitchCase="'reconnecting'">Reconnecting… showing last known orders</ng-container>
+            <ng-container *ngSwitchCase="'loading'">Loading…</ng-container>
+            <ng-container *ngSwitchCase="'live'">Newest {{ orders.length }} orders, live</ng-container>
+            <ng-container *ngSwitchDefault>Orders {{ range }}<span *ngIf="newer"> · newer orders available</span></ng-container>
+        </ng-container>
+    </span>
+</div>
 <div class="mat-elevation-z4">
-    <table mat-table [dataSource]="orders">
+    <table mat-table [dataSource]="orders" [trackBy]="trackByOrder">
         <!-- ClOrdID Column -->
         <ng-container matColumnDef="clOrdID">
             <th mat-header-cell *matHeaderCellDef>ClOrdID</th>

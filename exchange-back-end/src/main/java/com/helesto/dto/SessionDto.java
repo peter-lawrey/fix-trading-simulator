@@ -87,6 +87,8 @@ public class SessionDto {
 
         private String value;
 
+        public SessionSettingsProperties() {}
+
         public SessionSettingsProperties(String key, String value) {
             this.key = key;
             this.value = value;

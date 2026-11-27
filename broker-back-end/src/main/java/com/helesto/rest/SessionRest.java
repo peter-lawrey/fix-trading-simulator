@@ -2,6 +2,8 @@ package com.helesto.rest;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -22,7 +24,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import quickfix.ConfigError;
+
 
 @RequestScoped
 @Tag(name = "Session control")
@@ -57,7 +59,7 @@ public class SessionRest {
     @Operation(summary = "Start initiator and make logon")
     @APIResponse(responseCode = "200", description = "Initiator started", content = {
             @Content(mediaType = "application/json", schema = @Schema(implementation = SessionDto.class)) })
-    public Response startInitiator() throws ConfigError {
+    public Response startInitiator() throws Exception {
 
         LOG.debug("Session + POST - start initiator");
 
@@ -73,7 +75,7 @@ public class SessionRest {
     @Operation(summary = "Logout and stop initiator")
     @APIResponse(responseCode = "200", description = "Initiator stopped", content = {
             @Content(mediaType = "application/json", schema = @Schema(implementation = SessionDto.class)) })
-    public Response stopInitiator() throws ConfigError {
+    public Response stopInitiator() throws Exception {
 
         LOG.debug("Session + POST - stop initiator");
 
@@ -89,7 +91,7 @@ public class SessionRest {
     @Operation(summary = "Logout")
     @APIResponse(responseCode = "200", description = "Logout done", content = {
             @Content(mediaType = "application/json", schema = @Schema(implementation = SessionDto.class)) })
-    public Response logout() throws ConfigError {
+    public Response logout() throws Exception {
 
         LOG.debug("Session + POST - logout");
 
@@ -105,7 +107,7 @@ public class SessionRest {
     @Operation(summary = "Return Messages sent from current session")
     @APIResponse(responseCode = "200", content = {
             @Content(mediaType = "application/json", schema = @Schema(implementation = MessageDto[].class)) })
-    public Response messageGet() throws ConfigError {
+    public Response messageGet() throws Exception {
 
         LOG.info("messageGet");
 

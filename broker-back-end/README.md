@@ -1,5 +1,7 @@
 # broker-back-end project
 
+Build this branch from the repository root with JDK 17 and `mvn clean verify`. The role uses the shared trading engine and JDK event spool. See the [journal setup and reporting gateway](../README.md#running-the-project).
+
 # PostgreSQL
 
 Run:

@@ -1,41 +1,22 @@
 package com.helesto.core;
 
+import com.helesto.journal.Main;
+import com.helesto.socket.OrderSocket;
+import io.quarkus.runtime.ShutdownEvent;
+import io.quarkus.runtime.StartupEvent;
 import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.event.Observes;
 import javax.inject.Inject;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import io.quarkus.runtime.ShutdownEvent;
-import io.quarkus.runtime.StartupEvent;
-
 @ApplicationScoped
 public class Bootstrap {
+  @Inject OrderSocket orders;
 
-    private static final Logger LOG = LoggerFactory.getLogger(Bootstrap.class.getName());
+  void start(@Observes StartupEvent event) throws Exception {
+    Main.open(orders::broadcast);
+  }
 
-    @Inject
-    Trader trader;
-
-    public Bootstrap() {
-        LOG.info("Constructor");
-    }
-
-    public Trader getTrader() {
-        return trader;
-    }
-
-    // Starts automatically with application
-    public void onStart(@Observes StartupEvent StartupEvent) {
-        LOG.info("onStart");
-        trader.init();
-    }
-
-    // Ends automatically with application
-    public void onStop(@Observes ShutdownEvent shutdownEvent) {
-        LOG.info("onStop");
-        trader.stop();
-    }
-
+  void stop(@Observes ShutdownEvent event) throws Exception {
+    Main.close();
+  }
 }

@@ -1,38 +1,18 @@
 package com.helesto.service;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.helesto.dto.*;
+import com.helesto.journal.Main;
 import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-
-import com.helesto.core.Trader;
-import com.helesto.dao.MessagesDao;
-import com.helesto.dto.MessageDto;
-import com.helesto.util.FixSeparator;
-
-import quickfix.ConfigError;
-import quickfix.SessionSettings;
 
 @RequestScoped
 public class MessageService {
-
-    @Inject
-    Trader trader;
-
-    @Inject
-    MessagesDao messagesDao;
-
-    public MessageDto[] messageGet() throws ConfigError {
-
-        List<MessageDto> listMessageDto = new ArrayList<>();
-
-        messagesDao.listMessages(trader.getStringFromSettings(SessionSettings.SENDERCOMPID))
-                .forEach(message -> listMessageDto.add(
-                        new MessageDto(message.getMsgseqnum(), FixSeparator.putFixSeparator(message.getMessage()))));
-
-        return listMessageDto.toArray(new MessageDto[0]);
-
+  public MessageDto[] messageGet() throws Exception {
+    var rows = Main.messages(false, true);
+    var result = new MessageDto[rows.size()];
+    for (int i = 0; i < result.length; i++) {
+      var r = rows.getJsonObject(i);
+      result[i] = new MessageDto(r.getInteger("msgseqnum"), r.getString("message"));
     }
-
+    return result;
+  }
 }
