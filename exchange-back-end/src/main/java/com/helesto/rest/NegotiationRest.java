@@ -2,8 +2,6 @@ package com.helesto.rest;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
@@ -47,11 +45,6 @@ public class NegotiationRest {
                 NegotiationDto response = new NegotiationDto(exchange.isAutomaticTrade(),
                                 exchange.getAutomaticTradeSeconds());
 
-                Jsonb jsonb = JsonbBuilder.create();
-                String jsonString = jsonb.toJson(response);
-
-                LOG.debug("Negotiation - GET - response: " + jsonString);
-
                 return Response.status(Response.Status.OK).entity(response).build();
 
         }
@@ -63,18 +56,9 @@ public class NegotiationRest {
                         @Content(mediaType = "application/json", schema = @Schema(implementation = NegotiationDto.class)) })
         public Response put(NegotiationDto negotiationDto) throws SessionNotFound {
 
-                Jsonb jsonb = JsonbBuilder.create();
-                String jsonString = jsonb.toJson(negotiationDto);
-
                 exchange.setAutomaticTrade(negotiationDto.isAutomaticTrade());
 
                 exchange.setAutomaticTradeSeconds(negotiationDto.getAutomaticTradeSeconds());
-
-                LOG.debug("Negotiation - PUT - request \n" + jsonString);
-
-                jsonString = jsonb.toJson(negotiationDto);
-
-                LOG.debug("Negotiation - PUT - response\n" + jsonString);
 
                 return Response.status(Response.Status.OK).entity(negotiationDto).build();
 

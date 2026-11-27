@@ -2,8 +2,6 @@ package com.helesto.rest;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -50,11 +48,6 @@ public class SessionRest {
 
         SessionDto sessionDto = sessionService.sessionGet();
 
-        Jsonb jsonb = JsonbBuilder.create();
-        String jsonString = jsonb.toJson(sessionDto);
-
-        LOG.debug("Session + GET - response: " + jsonString);
-
         return Response.status(Response.Status.OK).entity(sessionDto).build();
     }
 
@@ -69,11 +62,6 @@ public class SessionRest {
         LOG.debug("Session + POST - start initiator");
 
         SessionDto sessionDto = sessionService.startInitiator();
-
-        Jsonb jsonb = JsonbBuilder.create();
-        String jsonString = jsonb.toJson(sessionDto);
-
-        LOG.debug("Session + POST - start initiator - response: " + jsonString);
 
         return Response.status(Response.Status.OK).entity(sessionDto).build();
 
@@ -91,11 +79,6 @@ public class SessionRest {
 
         SessionDto sessionDto = sessionService.stopInitiator();
 
-        Jsonb jsonb = JsonbBuilder.create();
-        String jsonString = jsonb.toJson(sessionDto);
-
-        LOG.debug("Session + POST - stop initiator - response: " + jsonString);
-
         return Response.status(Response.Status.OK).entity(sessionDto).build();
 
     }
@@ -112,11 +95,6 @@ public class SessionRest {
 
         SessionDto sessionDto = sessionService.logout();
 
-        Jsonb jsonb = JsonbBuilder.create();
-        String jsonString = jsonb.toJson(sessionDto);
-
-        LOG.debug("Session + POST - logout - response: " + jsonString);
-
         return Response.status(Response.Status.OK).entity(sessionDto).build();
 
     }
@@ -132,11 +110,6 @@ public class SessionRest {
         LOG.info("messageGet");
 
         MessageDto[] messageDto = messageService.messageGet();
-
-        Jsonb jsonb = JsonbBuilder.create();
-        String jsonString = jsonb.toJson(messageDto);
-
-        LOG.debug("Session + GET - response: " + jsonString);
 
         return Response.status(Response.Status.OK).entity(messageDto).build();
     }

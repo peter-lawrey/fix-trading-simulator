@@ -2,8 +2,6 @@ package com.helesto.rest;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -53,16 +51,7 @@ public class OrdersRest {
                         @Content(mediaType = "application/json", schema = @Schema(implementation = OrderDto.class)) })
         public Response create(OrderDto request) throws SessionNotFound {
 
-                Jsonb jsonb = JsonbBuilder.create();
-                String jsonString = jsonb.toJson(request);
-
-                LOG.debug("Orders + POST - request: " + jsonString);
-
                 OrderDto response = newOrderSingleService.newOrderSingle(request);
-
-                jsonString = jsonb.toJson(response);
-
-                LOG.debug("Orders + POST - response: " + jsonString);
 
                 return Response.status(Response.Status.OK).entity(response).build();
         }
@@ -77,11 +66,6 @@ public class OrdersRest {
                 LOG.debug("OrdersListRest + GET - begin");
 
                 OrderDto[] response = orderService.listOrders();
-
-                Jsonb jsonb = JsonbBuilder.create();
-                String jsonString = jsonb.toJson(response);
-
-                LOG.debug("OrdersListRest + GET - response: " + jsonString);
 
                 return Response.status(Response.Status.OK).entity(response).build();
 
@@ -101,11 +85,6 @@ public class OrdersRest {
 
                 OrderDto response = orderService.gerOrder(clOrdID);
 
-                Jsonb jsonb = JsonbBuilder.create();
-                String jsonString = jsonb.toJson(response);
-
-                LOG.debug("OrderGetRest + GET - response: " + jsonString);
-
                 return Response.status(Response.Status.OK).entity(response).build();
 
         }
@@ -123,11 +102,6 @@ public class OrdersRest {
                 LOG.debug("Orders + DELETE - clOrdID=[" + clOrdID + "]");
 
                 OrderDto response = orderCancelRequestService.orderCancelRequest(clOrdID);
-
-                Jsonb jsonb = JsonbBuilder.create();
-                String jsonString = jsonb.toJson(response);
-
-                LOG.debug("Orders + DELETE - clOrdID=[" + clOrdID + "] - response: " + jsonString);
 
                 return Response.status(Response.Status.OK).entity(response).build();
         }
