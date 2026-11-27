@@ -2,7 +2,10 @@ package com.helesto.rest;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
 import javax.ws.rs.GET;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
@@ -22,7 +25,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import quickfix.ConfigError;
+
 
 @RequestScoped
 @Tag(name = "Log")
@@ -43,7 +46,7 @@ public class LogsRest {
     @Operation(summary = "Return Event Log information")
     @APIResponse(responseCode = "200", content = {
             @Content(mediaType = "application/json", schema = @Schema(implementation = EventLogDto[].class)) })
-    public Response eventLogGet() throws ConfigError {
+    public Response eventLogGet() throws Exception {
 
         LOG.info("eventLogGet");
 
@@ -58,11 +61,11 @@ public class LogsRest {
     @Operation(summary = "Return Message Log Incoming")
     @APIResponse(responseCode = "200", content = {
             @Content(mediaType = "application/json", schema = @Schema(implementation = MessageDto[].class)) })
-    public Response messageLogIncomingGet() throws ConfigError {
+    public Response messageLogIncomingGet(@QueryParam("before") Integer before, @QueryParam("limit") Integer limit) throws Exception {
 
         LOG.info("messageLogGet - incoming");
 
-        MessageLogDto[] messageLogDto = messageLogService.messageLogGet(MessageLogService.INCOMING);
+        MessageLogDto[] messageLogDto = messageLogService.messageLogGet(MessageLogService.INCOMING, before, limit);
 
         return Response.status(Response.Status.OK).entity(messageLogDto).build();
     }
@@ -73,11 +76,11 @@ public class LogsRest {
     @Operation(summary = "Return Message Log Outgoing")
     @APIResponse(responseCode = "200", content = {
             @Content(mediaType = "application/json", schema = @Schema(implementation = MessageDto[].class)) })
-    public Response messageLogOutgoingGet() throws ConfigError {
+    public Response messageLogOutgoingGet(@QueryParam("before") Integer before, @QueryParam("limit") Integer limit) throws Exception {
 
         LOG.info("messageLogGet - outgoing");
 
-        MessageLogDto[] messageLogDto = messageLogService.messageLogGet(MessageLogService.OUTGOING);
+        MessageLogDto[] messageLogDto = messageLogService.messageLogGet(MessageLogService.OUTGOING, before, limit);
 
         return Response.status(Response.Status.OK).entity(messageLogDto).build();
     }

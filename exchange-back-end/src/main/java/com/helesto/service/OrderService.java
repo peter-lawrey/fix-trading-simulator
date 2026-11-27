@@ -1,72 +1,31 @@
 package com.helesto.service;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-
-import com.helesto.core.Exchange;
-import com.helesto.dao.OrderDao;
 import com.helesto.dto.OrderDto;
-import com.helesto.model.OrderEntity;
-
-import quickfix.ConfigError;
-import quickfix.SessionNotFound;
-import quickfix.field.OrdStatus;
+import com.helesto.journal.Main;
+import javax.enterprise.context.RequestScoped;
 
 @RequestScoped
 public class OrderService {
+  public OrderDto[] listOrders(Integer after, Integer before, String order, Integer limit) {
+    return Main.orders(after, before, order, limit).stream()
+        .map(o -> o.mapTo(OrderDto.class))
+        .toArray(OrderDto[]::new);
+  }
 
-    @Inject
-    OrderDao orderDao;
+  public OrderDto getOrder(int id) {
+    return Main.getOrder(id).mapTo(OrderDto.class);
+  }
 
-    @Inject
-    ExecutionReportService executionReportService;
+  public OrderDto cancelOrder(int orderID) throws Exception {
+    return com.helesto.journal.Main.change(orderID, "DELETE", new io.vertx.core.json.JsonObject())
+        .mapTo(OrderDto.class);
+  }
 
-    @Inject
-    Exchange exchange;
-
-    public OrderDto[] listOrders() throws ConfigError {
-
-        List<OrderDto> listOrderDto = new ArrayList<>();
-
-        orderDao.listOrders().forEach(order -> listOrderDto.add(new OrderDto(order)));
-
-        return listOrderDto.toArray(new OrderDto[0]);
-
-    }
-
-    public OrderDto getOrder(int orderID) throws ConfigError {
-
-        return new OrderDto(orderDao.readByOrderID(orderID).get());
-
-    }
-
-    public OrderDto cancelOrder(int orderID) throws SessionNotFound {
-
-        OrderEntity order = orderDao.readByOrderID(orderID).get();
-
-        order.setOrdStatus(OrdStatus.CANCELED);
-
-        executionReportService.updateOrderAndSendExecutionReport(order, exchange.getSessionIDFromSettings());
-
-        return new OrderDto(order);
-
-    }
-
-    public OrderDto editOrder(int orderID, char ordStatus, double cumQty) throws SessionNotFound {
-
-        OrderEntity order = orderDao.readByOrderID(orderID).get();
-
-        order.setOrdStatus(ordStatus);
-
-        order.setCumQty(cumQty);
-
-        executionReportService.updateOrderAndSendExecutionReport(order, exchange.getSessionIDFromSettings());
-
-        return new OrderDto(order);
-
-    }
-
+  public OrderDto editOrder(int orderID, char ordStatus, double cumQty) throws Exception {
+    var body =
+        new io.vertx.core.json.JsonObject()
+            .put("ordStatus", String.valueOf(ordStatus))
+            .put("cumQty", cumQty);
+    return com.helesto.journal.Main.change(orderID, "PATCH", body).mapTo(OrderDto.class);
+  }
 }

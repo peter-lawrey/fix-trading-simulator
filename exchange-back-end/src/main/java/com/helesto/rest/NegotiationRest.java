@@ -20,8 +20,8 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import quickfix.ConfigError;
-import quickfix.SessionNotFound;
+
+
 
 @Path("/negotiation")
 @Tag(name = "Negotiation configuration")
@@ -38,12 +38,14 @@ public class NegotiationRest {
         @Operation(summary = "Negotiation configuration")
         @APIResponse(responseCode = "200", content = {
                         @Content(mediaType = "application/json", schema = @Schema(implementation = NegotiationDto.class)) })
-        public Response get() throws ConfigError {
+        public Response get() throws Exception {
 
                 LOG.debug("Negotiation - GET");
 
                 NegotiationDto response = new NegotiationDto(exchange.isAutomaticTrade(),
                                 exchange.getAutomaticTradeSeconds());
+
+
 
                 return Response.status(Response.Status.OK).entity(response).build();
 
@@ -54,11 +56,15 @@ public class NegotiationRest {
         @Operation(summary = "Update negotiation configuration")
         @APIResponse(responseCode = "200", description = "Order", content = {
                         @Content(mediaType = "application/json", schema = @Schema(implementation = NegotiationDto.class)) })
-        public Response put(NegotiationDto negotiationDto) throws SessionNotFound {
+        public Response put(NegotiationDto negotiationDto) throws Exception {
+
 
                 exchange.setAutomaticTrade(negotiationDto.isAutomaticTrade());
 
                 exchange.setAutomaticTradeSeconds(negotiationDto.getAutomaticTradeSeconds());
+
+
+
 
                 return Response.status(Response.Status.OK).entity(negotiationDto).build();
 

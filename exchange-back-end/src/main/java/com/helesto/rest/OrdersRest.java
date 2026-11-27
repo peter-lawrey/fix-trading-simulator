@@ -2,8 +2,11 @@ package com.helesto.rest;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.PATCH;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
@@ -23,8 +26,8 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import quickfix.ConfigError;
-import quickfix.SessionNotFound;
+
+
 
 @Path("/orders")
 @Tag(name = "Orders")
@@ -41,11 +44,12 @@ public class OrdersRest {
         @Operation(summary = "List Orders", description = "List all Orders")
         @APIResponse(responseCode = "200", description = "Orders listed", content = {
                         @Content(mediaType = "application/json", schema = @Schema(implementation = OrderDto[].class)) })
-        public Response list() throws ConfigError {
+        public Response list(@QueryParam("after") Integer after, @QueryParam("before") Integer before,
+                        @QueryParam("order") String order, @QueryParam("limit") Integer limit) throws Exception {
 
                 LOG.debug("OrdersListRest + GET - begin");
 
-                OrderDto[] response = orderService.listOrders();
+                OrderDto[] response = orderService.listOrders(after, before, order, limit);
 
                 return Response.status(Response.Status.OK).entity(response).build();
 
@@ -59,7 +63,7 @@ public class OrdersRest {
                         @Content(mediaType = "application/json", schema = @Schema(implementation = OrderDto.class)) })
         public Response getByID(
                         @Parameter(description = "The order id to READ.", required = true) @PathParam("orderID") int orderID)
-                        throws ConfigError {
+                        throws Exception {
 
                 LOG.debug("OrderGetRest + GET BY ID - begin - orderID=[" + orderID + "]");
 
@@ -77,7 +81,7 @@ public class OrdersRest {
                         @Content(mediaType = "application/json", schema = @Schema(implementation = OrderDto.class)) })
         public Response cancelByID(
                         @Parameter(description = "The order id to cancel.", required = true) @PathParam("orderID") int orderID)
-                        throws SessionNotFound {
+                        throws Exception {
 
                 LOG.debug("OrderGetRest + Cancel BY ID - begin - orderID=[" + orderID + "]");
 
@@ -95,7 +99,7 @@ public class OrdersRest {
                         @Content(mediaType = "application/json", schema = @Schema(implementation = OrderDto.class)) })
         public Response updateByID(OrderDto orderDto,
                         @Parameter(description = "The order id to update.", required = true) @PathParam("orderID") int orderID)
-                        throws SessionNotFound {
+                        throws Exception {
 
                 OrderDto response = orderService.editOrder(orderID, orderDto.getOrdStatus(), orderDto.getCumQty());
 

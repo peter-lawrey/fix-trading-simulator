@@ -1,48 +1,21 @@
 package com.helesto.service;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.helesto.dto.*;
+import com.helesto.journal.Main;
 import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-
-import com.helesto.core.Exchange;
-import com.helesto.dao.MessageLogDao;
-import com.helesto.dto.MessageLogDto;
-import com.helesto.util.FixSeparator;
-
-import quickfix.ConfigError;
-import quickfix.SessionSettings;
 
 @RequestScoped
 public class MessageLogService {
+  public static final String INCOMING = "incoming", OUTGOING = "outgoing";
 
-    public static final String INCOMING = "INCOMING";
-
-    public static final String OUTGOING = "OUTGONIG";
-
-    @Inject
-    Exchange exchange;
-
-    @Inject
-    MessageLogDao messageLogDao;
-
-    public MessageLogDto[] messageLogGet(String typeOfLog) throws ConfigError {
-
-        List<MessageLogDto> listMessageLogDto = new ArrayList<>();
-
-        if (typeOfLog.equals(INCOMING)) {
-            messageLogDao.listMessageLogIncoming(exchange.getStringFromSettings(SessionSettings.SENDERCOMPID))
-                    .forEach(messageLog -> listMessageLogDto.add(new MessageLogDto(messageLog.getId(),
-                            messageLog.getTime().toString(), FixSeparator.putFixSeparator(messageLog.getText()))));
-        } else {
-            messageLogDao.listMessageLogOutgoing(exchange.getStringFromSettings(SessionSettings.SENDERCOMPID))
-                    .forEach(messageLog -> listMessageLogDto.add(new MessageLogDto(messageLog.getId(),
-                            messageLog.getTime().toString(), FixSeparator.putFixSeparator(messageLog.getText()))));
-        }
-
-        return listMessageLogDto.toArray(new MessageLogDto[0]);
-
+  public MessageLogDto[] messageLogGet(String direction, Integer before, Integer limit)
+      throws Exception {
+    var rows = Main.messageLog(INCOMING.equals(direction), before, limit);
+    var result = new MessageLogDto[rows.size()];
+    for (int i = 0; i < result.length; i++) {
+      var r = rows.getJsonObject(i);
+      result[i] = new MessageLogDto(r.getInteger("id"), r.getString("time"), r.getString("text"));
     }
-
+    return result;
+  }
 }

@@ -17,3 +17,19 @@ table {
 button {
     margin-bottom: 20px;
 }
+
+.order-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 8px;
+}
+
+.order-toolbar button {
+    margin-right: 12px;
+}
+
+.feed-state {
+    margin-bottom: 20px;
+    color: rgba(0, 0, 0, 0.6);
+}

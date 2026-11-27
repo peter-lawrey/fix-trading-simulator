@@ -4,7 +4,7 @@ import { catchError, map } from 'rxjs/operators';
 
 import { Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { EMPTY, Observable } from 'rxjs';
 
 @Injectable({
@@ -44,6 +44,16 @@ export class LogService {
       map((obj) => obj),
       catchError((error) => this.errorHandler(error))
     )
+  }
+
+  /** Up to `limit` messages with id below `before` (or the newest), newest first. */
+  readMessagePage(mode: string, before: number | undefined, limit: number): Observable<LogMessage[]> {
+    const url = `${this.baseUrl}/messages-${mode}`;
+    let params = new HttpParams().set('limit', String(limit));
+    if (before !== undefined) params = params.set('before', String(before));
+    return this.http.get<LogMessage[]>(url, { params }).pipe(
+      catchError((error) => this.errorHandler(error))
+    );
   }
 
   errorHandler(e: any): Observable<any> {

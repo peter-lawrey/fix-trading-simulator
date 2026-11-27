@@ -5,9 +5,19 @@
     <button mat-raised-button (click)="readMessages(true)" color="primary">
         Refresh
     </button>
+    <button mat-stroked-button class="latest" (click)="latest()" [disabled]="latestPage">
+        Latest
+    </button>
+    <button mat-stroked-button class="newer" (click)="newer()" [disabled]="latestPage">
+        Newer
+    </button>
+    <button mat-stroked-button class="older" (click)="older()" [disabled]="!logMessages.length || logMessages[logMessages.length - 1].id <= 1">
+        Older
+    </button>
+    <span class="page-range" [attr.data-latest]="latestPage">Messages {{ range }}<span *ngIf="latestPage"> (newest)</span></span>
 
     <div class="mat-elevation-z4">
-        <table mat-table [dataSource]="logMessages">
+        <table mat-table [dataSource]="logMessages" [trackBy]="trackById">
             <!-- ID Column -->
             <ng-container matColumnDef="id">
                 <th mat-header-cell *matHeaderCellDef>Id</th>

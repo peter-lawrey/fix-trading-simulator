@@ -12,6 +12,14 @@ export class OrderWebSocketService {
 
     myWebSocket: WebSocketSubject<Order> = webSocket('ws://localhost:8090/socket/order');
 
+    /** The server sends {"subscribed":true} first, once this socket receives every later update. */
+    feedUrl = 'ws://localhost:8090/socket/order?hello=1';
+
+    /** A native socket for the bounded order view; the caller owns its handlers and closing. */
+    public openFeed(): WebSocket {
+        return new WebSocket(this.feedUrl);
+    }
+
     constructor(private snackBar: MatSnackBar) { }
 
     public connect(): Observable<Order> {

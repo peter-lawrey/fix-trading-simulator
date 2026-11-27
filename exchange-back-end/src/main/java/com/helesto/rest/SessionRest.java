@@ -2,6 +2,8 @@ package com.helesto.rest;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -22,7 +24,7 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import quickfix.ConfigError;
+
 
 @RequestScoped
 @Tag(name = "Session control")
@@ -57,7 +59,7 @@ public class SessionRest {
     @Operation(summary = "Start acceptor and make logon")
     @APIResponse(responseCode = "200", description = "Acceptor started", content = {
             @Content(mediaType = "application/json", schema = @Schema(implementation = SessionDto.class)) })
-    public Response startAcceptor() throws ConfigError {
+    public Response startAcceptor() throws Exception {
 
         LOG.debug("Session + POST - start acceptor");
 
@@ -73,7 +75,7 @@ public class SessionRest {
     @Operation(summary = "Logout and stop acceptor")
     @APIResponse(responseCode = "200", description = "Acceptor stopped", content = {
             @Content(mediaType = "application/json", schema = @Schema(implementation = SessionDto.class)) })
-    public Response stopAcceptor() throws ConfigError {
+    public Response stopAcceptor() throws Exception {
 
         LOG.debug("Session + POST - stop acceptor");
 
@@ -89,7 +91,7 @@ public class SessionRest {
     @Operation(summary = "Return Messages sent from current session")
     @APIResponse(responseCode = "200", content = {
             @Content(mediaType = "application/json", schema = @Schema(implementation = MessageDto[].class)) })
-    public Response messageGet() throws ConfigError {
+    public Response messageGet() throws Exception {
 
         LOG.info("messageGet");
 

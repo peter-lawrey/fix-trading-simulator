@@ -1,37 +1,18 @@
 package com.helesto.service;
 
-import java.util.ArrayList;
-import java.util.List;
-
+import com.helesto.dto.*;
+import com.helesto.journal.Main;
 import javax.enterprise.context.RequestScoped;
-import javax.inject.Inject;
-
-import com.helesto.core.Exchange;
-import com.helesto.dao.EventLogDao;
-import com.helesto.dto.EventLogDto;
-
-import quickfix.ConfigError;
-import quickfix.SessionSettings;
 
 @RequestScoped
 public class EventLogService {
-
-    @Inject
-    Exchange exchange;
-
-    @Inject
-    EventLogDao eventLogDao;
-
-    public EventLogDto[] eventLogGet() throws ConfigError {
-
-        List<EventLogDto> listEventLogDto = new ArrayList<>();
-
-        eventLogDao.listEventLog(exchange.getStringFromSettings(SessionSettings.SENDERCOMPID))
-                .forEach(eventLog -> listEventLogDto
-                        .add(new EventLogDto(eventLog.getId(), eventLog.getTime().toString(), eventLog.getText())));
-
-        return listEventLogDto.toArray(new EventLogDto[0]);
-
+  public EventLogDto[] eventLogGet() throws Exception {
+    var rows = Main.events();
+    var result = new EventLogDto[rows.size()];
+    for (int i = 0; i < result.length; i++) {
+      var r = rows.getJsonObject(i);
+      result[i] = new EventLogDto(r.getInteger("id"), r.getString("time"), r.getString("text"));
     }
-
+    return result;
+  }
 }

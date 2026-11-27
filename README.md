@@ -17,13 +17,15 @@ If you want to participate on this project, just open an issue and we can talk a
 
 Both Broker and Exchange systems were built with Quarkus on the back-end and Angular on the front-end. 
 
-The back-ends communicate each other with QuickFIX/J and each has a schema into the PostgreSQL.
+QuickFIX/J connects the broker and exchange. Each process keeps its book in memory and writes a local append-only journal. The reporting gateway projects the two journals into separate PostgreSQL schemas.
 
 Each Angular front-end communicates with the Quarkus back-end using REST and Websockets.
 
 # System Architecture
 
-![image](./documentation/design/fix-trading-simulator-design.png)
+The original direct-SQL design is illustrated below. On this branch the journal and reporting gateway separate trading from database access.
+
+![Original JDBC architecture](./documentation/design/fix-trading-simulator-design.png)
 
 # Project Structure
 
@@ -66,101 +68,63 @@ List the messages received and sent.
 
 # Running the project
 
-## With docker-compose
+This branch uses QuickFIX/J 2.3.0, a JDK file journal and a separate PostgreSQL reporting process.
+The [JDBC branch](https://github.com/peter-lawrey/fix-trading-simulator/tree/sql-optimisations) retains the direct database implementation.
+The original Docker Hub images run the original JDBC implementation.
 
-After start, access project at:
-- Broker Front end
-  - http://localhost/
-- Broker Back end swagger: 
-  - http://localhost:8080/q/swagger-ui/
-- Exchange Front end
-  - http://localhost:90/
-- Exchange Back end swagger: 
-  - http://localhost:8090/q/swagger-ui/
-- PostgreSQL:
-  - jdbc:postgresql://localhost:5432/postgres
-  - user: postgres
-  - password: postgres
+## Start the broker and exchange
 
-The containers should be running like this:
-```
-docker ps
-CONTAINER ID        IMAGE                               COMMAND                  CREATED             STATUS              PORTS                    NAMES
-8191a0fcde2f        felipewind/exchange-front-end:1.0   "/docker-entrypoint.…"   16 minutes ago      Up 16 minutes       0.0.0.0:90->80/tcp       exchange-front-end
-1178d4e1c02f        felipewind/broker-front-end:1.0     "/docker-entrypoint.…"   16 minutes ago      Up 16 minutes       0.0.0.0:80->80/tcp       broker-front-end
-2370c47d0a2d        felipewind/broker-back-end:1.0      "/deployments/run-ja…"   16 minutes ago      Up 16 minutes       0.0.0.0:8080->8080/tcp   broker-back-end
-8106b9a48217        felipewind/exchange-back-end:1.0    "/deployments/run-ja…"   16 minutes ago      Up 16 minutes       0.0.0.0:8090->8090/tcp   exchange-back-end
-6b53a07b72ac        postgres                            "docker-entrypoint.s…"   16 minutes ago      Up 16 minutes       0.0.0.0:5432->5432/tcp   fix-trading-simulator_postgresql-qfj_1
+Use Maven and JDK 17 in the repository root. Each role owns its own directory for its QuickFIX/J FileStore, directional FIX logs and business journal.
+
+```bash
+mvn clean verify
+java -jar exchange-back-end/target/quarkus-app/quarkus-run.jar
+# In a second terminal
+java -jar broker-back-end/target/quarkus-app/quarkus-run.jar
 ```
 
-### Using the Docker Hub Images
+The broker listens on HTTP port 8080, the exchange on 8090, and the FIX pair connects on loopback port 9880.
+Set `SIM_FIX_HOST`, `SIM_FIX_PORT`, `SIM_SENDER`, `SIM_TARGET` and `SIM_STORE` per process to run another session.
+The defaults store each role under `data/<role>`. A fresh JVM reopens the same session and replays its journal.
 
-Inside the root folder of the project, execute:
-```
-$ chmod +x ./run-from-docker-hub.sh
-$ ./run-from-docker-hub.sh
-```
-
-Docker Hub images:
-- [exchange-back-end](https://hub.docker.com/repository/docker/felipewind/exchange-back-end)
-- [exchange-front-end](https://hub.docker.com/repository/docker/felipewind/exchange-front-end)
-- [broker-back-end](https://hub.docker.com/repository/docker/felipewind/broker-back-end)
-- [broker-front-end](https://hub.docker.com/repository/docker/felipewind/broker-front-end)
-
-### Building the Docker images locally
-
-Inside the root folder of the project, execute:
-```
-$ chmod +x ./run-with-local-build.sh
-$ ./run-with-local-build.sh
+```bash
+curl -H 'Content-Type: application/json' -d '{"side":"1","symbol":"IBM","orderQty":10,"price":23.50}' http://localhost:8080/orders
+curl 'http://localhost:8080/orders?order=desc&limit=100'
+python3 scripts/check-journal.py
 ```
 
-After the first build, you can use the `run-after-local-build` script.
+Use `ws://localhost:8080/socket/order-commands` to submit the same order JSON and receive a private admission response.
+The order can still be awaiting an execution report when admission succeeds. Dashboard notifications come from
+`/socket/order?hello=1`. Wait for the subscription acknowledgement before loading a page. An interrupted command
+connection can leave its outcome unknown. Reconcile the order before resubmitting.
 
+## Project the journal to PostgreSQL
 
+Start with empty broker and exchange schemas created using `init-broker.sql` and `init-exchange.sql`.
+Configure `SIM_DB_URL` (for example `jdbc:postgresql://localhost:5432/postgres?reWriteBatchedInserts=true`),
+`SIM_DB_USER` and `SIM_DB_PASSWORD` **on the gateway only**. From the same directory used for the trading processes:
 
-## Without docker-compose 
-
-The default version of the development back-end projects is using H2 data base (in memory).
-
-It's possible to change the `application.properties` and set them to run with PostgreSQL, in this case you should start a PostgreSQL container:
-```
-docker run -d --name postgres-qfj -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=postgres postgres
-```
-
-
-### Enter inside the `exchange-back-end` folder and type:
-```
-$ ./mvnw compile quarkus:dev -Ddebug=5006
+```bash
+java -cp 'reporting-gateway/target/*:reporting-gateway/target/dependency/*' \
+  com.helesto.journal.ProjectionGateway broker=data/broker/business-queue exchange=data/exchange/business-queue
 ```
 
-Access http://localhost:8090/q/swagger-ui/
+One writer per stream batches history, current orders and the file-offset checkpoint in one SQL transaction.
+The gateway resumes from that checkpoint after a restart. Trading can continue while SQL is offline.
+After stopping the trading processes and letting the gateway catch up, use the same classpath and arguments with
+`com.helesto.journal.ProjectionAudit` to compare the entire journal, order fields and reporting history.
 
-### Enter inside the `broker-back-end` folder and type:
-```
-$ ./mvnw compile quarkus:dev
-```
+The default journal uses OS-cached appends. Set `-Dsim.forceBusinessCommit=true` to force each business record before applying it.
+QuickFIX/J uses a separate file store. Keep both stores together for restore. Confirm ambiguous sends before resuming a fenced session.
+The admission check samples writer-usable disk space off the order thread. Low space (below 256 MiB) or a reading aged one second pauses new commands.
+Fresh space reopens admission. The remaining headroom is available to complete accepted work. An actual uncertain write fences the session for recovery.
 
-Access http://localhost:8080/q/swagger-ui/
+## Run with Docker Compose
 
-
-### Enter inside the `exchange-front-end` folder and type:
-```
-$ npm install
-$ ng serve
-```
-
-Access http://localhost:4300
-
-
-### Enter inside the `broker-front-end` folder and type:
-```
-$ npm install
-$ ng serve
-```
-
-Access http://localhost:4200
-
+Build with JDK 17, use the Angular 9 compatible Node toolchain for the dashboards and set `POSTGRES_PASSWORD` in the local shell.
+Run `./run-with-local-build.sh`, or `./run-after-local-build.sh` when the JVM packages and dashboards are already built.
+The two trading stores and reporting database have separate named volumes. Open the broker dashboard on port 80
+and the exchange dashboard on port 90. Use a fresh Compose project name when evaluating against an empty database.
 
 # Images
 
