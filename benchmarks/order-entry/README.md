@@ -29,3 +29,7 @@ python3 run.py --brokers http://127.0.0.1:8080 http://127.0.0.1:8180 \
 ```
 
 `run.py` validates client-visible order outcomes and writes exact per-window, median and pooled percentiles for each lane and both lanes together. `local.py` also checks the stopped stores and SQL. Use an idle host for timing and a separate process start for each configuration.
+
+## Measured results
+
+The CSV gives the median of five window percentiles in microseconds, with both sessions combined. Each configuration started fresh on an AMD Ryzen 9 9955HX3D with Linux and OpenJDK 17, 512 MiB application heaps and a 12,000-request warm-up. Direct runs used the local runner and WebSocket order entry. Relay runs captured both directions of each loopback FIX connection and used HTTP or WebSocket entry as labelled. Both sessions offered 2,000 orders/s in total for five 60-second windows. PostgreSQL 15.13 data and WAL were on tmpfs with fsync enabled. Business and FIX journals were on ext4. [Measured percentiles](median-percentiles-2026-11-27.csv)
