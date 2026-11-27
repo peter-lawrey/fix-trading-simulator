@@ -6,10 +6,19 @@
   <artifactId>event-spool</artifactId>
   <dependencies>
     <dependency>
+      <groupId>net.openhft</groupId>
+      <artifactId>chronicle-queue</artifactId>
+      <version>2026.9</version>
+    </dependency>
+    <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
       <version>5.7.1</version>
       <scope>test</scope>
     </dependency>
   </dependencies>
+  <build><plugins><plugin>
+    <artifactId>maven-surefire-plugin</artifactId>
+    <configuration><argLine>@${project.basedir}/../queue-jvm.args</argLine></configuration>
+  </plugin></plugins></build>
 </project>

@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 
 /** Single-writer, multi-process append log. Matching lengths frame each UTF-8 event. */
-public final class FileSpool implements AutoCloseable {
+public final class FileSpool implements BusinessJournal {
   static final int MAX = 16 << 20;
   final Path file;
   final FileChannel writer;
@@ -38,7 +38,7 @@ public final class FileSpool implements AutoCloseable {
     writer.close();
   }
 
-  public static final class Reader implements AutoCloseable {
+  public static final class Reader implements BusinessJournal.Reader {
     final FileChannel channel;
     long pos, last;
 
@@ -120,6 +120,14 @@ public final class FileSpool implements AutoCloseable {
       return new Reader(file.getParent());
     } catch (IOException e) {
       throw new UncheckedIOException(e);
+    }
+  }
+
+  public void recover(java.util.function.Consumer<String> replay) {
+    try (Reader tail = reader()) {
+      String text;
+      while ((text = tail.readText()) != null) replay.accept(text);
+      finishRecovery(tail);
     }
   }
 

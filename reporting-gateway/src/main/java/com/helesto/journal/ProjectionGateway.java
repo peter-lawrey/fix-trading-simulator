@@ -55,9 +55,9 @@ public final class ProjectionGateway {
   }
 
   private static void worker(String schema, Path dir, CommitObserver observer) throws Exception {
-    while (!Files.exists(dir.resolve("events.bin"))) Thread.sleep(25);
+    while (!BusinessJournal.exists(dir)) Thread.sleep(25);
     while (!Thread.currentThread().isInterrupted()) {
-      try (var tail = new FileSpool.Reader(dir);
+      try (var tail = BusinessJournal.openReader(dir);
           var db =
               DriverManager.getConnection(
                   System.getenv("SIM_DB_URL"),
