@@ -6,13 +6,11 @@ import java.util.Optional;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 
 import com.helesto.dto.OrderDto;
 import com.helesto.model.OrderEntity;
-import com.helesto.socket.OrderSocket;
+import javax.enterprise.event.Event;
 
 @ApplicationScoped
 public class OrderDao {
@@ -21,7 +19,7 @@ public class OrderDao {
     EntityManager em;
 
     @Inject
-	OrderSocket orderSocket;
+    Event<OrderDto> committedOrders;
 
     public List<OrderEntity> listOrders() {
 
@@ -32,27 +30,17 @@ public class OrderDao {
     }
 
     public Optional<OrderEntity> readByClOrdID(int clOrdID) {
-
-        Query query = em.createNamedQuery("Orders.findByClOrdID");
-
-        query.setParameter("clOrdID", clOrdID);
-
-        try {
-            return Optional.of((OrderEntity) query.getSingleResult());
-        } catch (NoResultException nre) {
-            return Optional.empty();
-        }
-
+        return Optional.ofNullable(em.find(OrderEntity.class, clOrdID));
     }
 
     public void persistOrder(OrderEntity order) {
         em.persist(order);
-        orderSocket.broadcast(new OrderDto(order));
+        committedOrders.fire(new OrderDto(order));
     }
 
     public void updateOrder(OrderEntity order) {
         em.merge(order);
-        orderSocket.broadcast(new OrderDto(order));
+        committedOrders.fire(new OrderDto(order));
     }
 
 }

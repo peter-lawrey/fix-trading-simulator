@@ -1,14 +1,14 @@
 package com.helesto.socket;
 
-import java.util.HashSet;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Set;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
+import javax.enterprise.event.Observes;
+import javax.enterprise.event.TransactionPhase;
 import javax.websocket.OnClose;
 import javax.websocket.OnError;
-import javax.websocket.OnMessage;
 import javax.websocket.OnOpen;
 import javax.websocket.Session;
 import javax.websocket.server.ServerEndpoint;
@@ -24,7 +24,10 @@ public class OrderSocket {
 
     private static final Logger LOG = LoggerFactory.getLogger(OrderSocket.class.getName());
 
-    Set<Session> sessions = new HashSet<>();
+    private final Set<Session> sessions = ConcurrentHashMap.newKeySet();
+
+    @javax.inject.Inject
+    Jsonb jsonb;
 
     @OnOpen
     public void onOpen(Session session) {
@@ -44,14 +47,8 @@ public class OrderSocket {
         sessions.remove(session);
     }
 
-    @OnMessage
-    public void onMessage(String message) {
-        LOG.debug("onMessage " + message);
-        broadcast(message);
-    }
-
-    public void broadcast(OrderDto orderDto) {
-        Jsonb jsonb = JsonbBuilder.create();
+    public void broadcast(@Observes(during = TransactionPhase.AFTER_SUCCESS) OrderDto orderDto) {
+        if (sessions.isEmpty()) return;
         String jsonString = jsonb.toJson(orderDto);
         broadcast(jsonString);
     }

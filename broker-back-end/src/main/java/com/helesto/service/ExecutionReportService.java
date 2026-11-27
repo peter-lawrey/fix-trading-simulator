@@ -35,13 +35,9 @@ public class ExecutionReportService {
 
 		try {
 
-			int clOrdID = 0;
-
-			try {
-				clOrdID = Integer.valueOf(executionReport.getOrigClOrdID().getValue());
-			} catch (FieldNotFound e) {
-				clOrdID = Integer.valueOf(executionReport.getClOrdID().getValue());
-			}
+			int idTag = executionReport.isSetField(quickfix.field.OrigClOrdID.FIELD)
+					? quickfix.field.OrigClOrdID.FIELD : quickfix.field.ClOrdID.FIELD;
+			int clOrdID = executionReport.getInt(idTag);
 
 			Optional<OrderEntity> optionalOrderEntity = orderDao.readByClOrdID(clOrdID);
 

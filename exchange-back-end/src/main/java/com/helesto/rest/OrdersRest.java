@@ -2,8 +2,6 @@ package com.helesto.rest;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.PATCH;
@@ -49,11 +47,6 @@ public class OrdersRest {
 
                 OrderDto[] response = orderService.listOrders();
 
-                Jsonb jsonb = JsonbBuilder.create();
-                String jsonString = jsonb.toJson(response);
-
-                LOG.debug("OrdersListRest + GET - response: " + jsonString);
-
                 return Response.status(Response.Status.OK).entity(response).build();
 
         }
@@ -71,11 +64,6 @@ public class OrdersRest {
                 LOG.debug("OrderGetRest + GET BY ID - begin - orderID=[" + orderID + "]");
 
                 OrderDto response = orderService.getOrder(orderID);
-
-                Jsonb jsonb = JsonbBuilder.create();
-                String jsonString = jsonb.toJson(response);
-
-                LOG.debug("OrderGetRest + GET - response: " + jsonString);
 
                 return Response.status(Response.Status.OK).entity(response).build();
 
@@ -95,11 +83,6 @@ public class OrdersRest {
 
                 OrderDto response = orderService.cancelOrder(orderID);
 
-                Jsonb jsonb = JsonbBuilder.create();
-                String jsonString = jsonb.toJson(response);
-
-                LOG.debug("OrderGetRest + Cancel BY ID - response: " + jsonString);
-
                 return Response.status(Response.Status.OK).entity(response).build();
 
         }
@@ -114,17 +97,7 @@ public class OrdersRest {
                         @Parameter(description = "The order id to update.", required = true) @PathParam("orderID") int orderID)
                         throws SessionNotFound {
 
-                Jsonb jsonb = JsonbBuilder.create();
-                String jsonString = jsonb.toJson(orderDto);
-
-                LOG.debug("OrderGetRest + Update BY ID - begin - orderID=[" + orderID + "]" + " orderDto = " + "\n"
-                                + jsonString);
-
                 OrderDto response = orderService.editOrder(orderID, orderDto.getOrdStatus(), orderDto.getCumQty());
-
-                jsonString = jsonb.toJson(response);
-
-                LOG.debug("OrderGetRest + Update BY ID - response: " + jsonString);
 
                 return Response.status(Response.Status.OK).entity(response).build();
 

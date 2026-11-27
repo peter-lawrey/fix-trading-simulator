@@ -2,8 +2,6 @@ package com.helesto.rest;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.json.bind.Jsonb;
-import javax.json.bind.JsonbBuilder;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -51,11 +49,6 @@ public class LogsRest {
 
         EventLogDto[] eventLogDto = eventLogService.eventLogGet();
 
-        Jsonb jsonb = JsonbBuilder.create();
-        String jsonString = jsonb.toJson(eventLogDto);
-
-        LOG.debug("Session + GET - response: " + jsonString);
-
         return Response.status(Response.Status.OK).entity(eventLogDto).build();
     }
 
@@ -71,11 +64,6 @@ public class LogsRest {
 
         MessageLogDto[] messageLogDto = messageLogService.messageLogGet(MessageLogService.INCOMING);
 
-        Jsonb jsonb = JsonbBuilder.create();
-        String jsonString = jsonb.toJson(messageLogDto);
-
-        LOG.debug("Session + GET - response: " + jsonString);
-
         return Response.status(Response.Status.OK).entity(messageLogDto).build();
     }
 
@@ -90,11 +78,6 @@ public class LogsRest {
         LOG.info("messageLogGet - outgoing");
 
         MessageLogDto[] messageLogDto = messageLogService.messageLogGet(MessageLogService.OUTGOING);
-
-        Jsonb jsonb = JsonbBuilder.create();
-        String jsonString = jsonb.toJson(messageLogDto);
-
-        LOG.debug("Session + GET - response: " + jsonString);
 
         return Response.status(Response.Status.OK).entity(messageLogDto).build();
     }
